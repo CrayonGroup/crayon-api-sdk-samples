@@ -1,0 +1,13 @@
+﻿@{
+    ViewBag.Title = "Organizations";
+}
+
+@model Crayon.Api.Sdk.Domain.Organizations.OrganizationCollection
+<h2>@ViewBag.Title:</h2>
+
+<ul>
+    @foreach (var org in Model.Items)
+    {
+        <li>@org.Name</li>
+    }
+</ul>

@@ -1,0 +1,69 @@
+﻿@using System.Configuration
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - Sample Application</title>
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+
+</head>
+<body>
+
+@{
+    var renderPage = true;
+}
+
+@if (string.IsNullOrEmpty(ConfigurationManager.AppSettings["CrayonClientId"]) || string.IsNullOrEmpty(ConfigurationManager.AppSettings["CrayonClientSecret"]))
+{
+    <div class="container">
+        <p class="alert alert-danger">
+            Please add your <strong>CrayonClientId</strong> and <strong>CrayonClientSecret</strong> to appsettings in web.config.
+        </p>
+    </div>
+    renderPage = false;
+}
+
+@if (string.IsNullOrEmpty(ConfigurationManager.AppSettings["CrayonUserName"]) || string.IsNullOrEmpty(ConfigurationManager.AppSettings["CrayonUserPassword"]))
+{
+    <div class="container">
+        <p class="alert alert-danger">
+            Please add your <strong>CrayonUserName</strong> and <strong>CrayonUserPassword</strong> to appsettings in web.config.
+        </p>
+    </div>
+    renderPage = false;
+}
+
+<div style="@(renderPage ? "" : "display: none;")">
+    <div class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                @Html.ActionLink("Sample application", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
+            </div>
+            <div class="navbar-collapse collapse">
+                <ul class="nav navbar-nav">
+                    <li>@Html.ActionLink("Home", "Index", "Home")</li>
+                    <li>@Html.ActionLink("Organizations", "Organizations", "Home")</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="container body-content">
+        @RenderBody()
+        <hr/>
+        <footer>
+            <p>&copy; @DateTime.Now.Year - Multiuser sample application</p>
+        </footer>
+    </div>
+</div>
+@Scripts.Render("~/bundles/jquery")
+@Scripts.Render("~/bundles/bootstrap")
+@RenderSection("scripts", false)
+</body>
+</html>
