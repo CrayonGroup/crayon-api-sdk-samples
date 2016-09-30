@@ -1,12 +1,11 @@
-﻿using Microsoft.AspNet.Authentication;
-using Microsoft.AspNet.Authentication.OpenIdConnect;
-using Microsoft.AspNet.Builder;
-using Microsoft.AspNet.Http;
+﻿using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
-using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.IdentityModel.Tokens;
 
 namespace MVC6.Extensions
 {
@@ -20,50 +19,35 @@ namespace MVC6.Extensions
             PathString callbackPath,
             bool requireHttps)
         {
-            app.UseOpenIdConnectAuthentication(options => {
-                options.Authority = authority;
-                options.PostLogoutRedirectUri = siteUrl;
-                options.CallbackPath = callbackPath;
-                options.ClientId = clientId;
-                options.Scope.Add("CustomerApi");
-                options.SignInScheme = "Cookies";
-                options.ResponseType = "id_token token";
-                options.ResponseMode = "form_post";
-                options.AutomaticAuthenticate = true;
-                options.AutomaticChallenge = true;
-                options.TokenValidationParameters.ValidateLifetime = true;
-                options.GetClaimsFromUserInfoEndpoint = true;
-                options.ConfigurationManager = new ConfigurationManager<OpenIdConnectConfiguration>(
-                    options.Authority + ".well-known/openid-configuration",
+            app.UseOpenIdConnectAuthentication(new OpenIdConnectOptions {
+                Authority = authority,
+                PostLogoutRedirectUri = siteUrl,
+                CallbackPath = callbackPath,
+                ClientId = clientId,
+                Scope = { "CustomerApi" },
+                SignInScheme = "Cookies",
+                ResponseType = "id_token token",
+                ResponseMode = "form_post",
+                AutomaticAuthenticate = true,
+                AutomaticChallenge = true,
+                TokenValidationParameters = new TokenValidationParameters {
+                    ValidateLifetime = true                    
+                },
+                GetClaimsFromUserInfoEndpoint = true,
+                ConfigurationManager = new ConfigurationManager<OpenIdConnectConfiguration>(
+                     authority + ".well-known/openid-configuration",
                     new OpenIdConnectConfigurationRetriever(),
                     new HttpDocumentRetriever { RequireHttps = requireHttps }
-                    );
-                options.Events = new OpenIdConnectEvents {
-                    OnAuthenticationValidated = n => {
-                        var incoming = n.AuthenticationTicket.Principal;
-                        var id = new ClaimsIdentity("application", "name", "role");
-                        id.AddClaimsFromIdentity(incoming, new List<string> {
-                            "name",
-                            "email",
-                            "email_verified",
-                            ClaimTypes.Email,
-                            ClaimTypes.NameIdentifier,
-                            ClaimTypes.Role,
-                            ClaimTypes.Name,
-                            ClaimTypes.GivenName,
-                            ClaimTypes.Surname
-                        });
-
-                        id.AddClaim(new Claim("token", n.ProtocolMessage.AccessToken));
-                        n.AuthenticationTicket = new AuthenticationTicket(
-                            new ClaimsPrincipal(id),
-                            n.AuthenticationTicket.Properties,
-                            n.AuthenticationTicket.AuthenticationScheme);
-
+                ),
+                Events = new OpenIdConnectEvents {
+                    OnTokenValidated = n => {
+                        var incoming = n.Ticket.Principal;
+                        var id = (ClaimsIdentity)incoming.Identity;
+                        id.AddClaim(new Claim("token", n.ProtocolMessage.AccessToken));                     
                         n.HandleResponse();
                         return Task.FromResult(0);
                     }
-                };
+                }
             });
 
             return app;
