@@ -1,6 +1,6 @@
 ﻿using System.Web.Mvc;
 using Crayon.Api.Sdk;
-using Crayon.Api.Sdk.Domain.Organizations;
+using Crayon.Api.Sdk.Domain;
 using SingleUserApplication.Handlers;
 using SingleUserApplication.Models;
 
@@ -34,7 +34,7 @@ namespace SingleUserApplication.Controllers
             ViewBag.Message = "Organizations:";
 
             string token = _tokenHandler.GetUserToken();
-            OrganizationCollection organizations = _client.Organizations.Get(token).GetData();
+            ApiCollection<Organization> organizations = _client.Organizations.Get(token).GetData();
             return View(organizations);
         }
     }

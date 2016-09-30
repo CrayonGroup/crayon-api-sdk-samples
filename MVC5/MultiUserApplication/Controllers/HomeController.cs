@@ -1,7 +1,7 @@
 ﻿using Crayon.Api.Sdk;
-using Crayon.Api.Sdk.Domain.Organizations;
 using MultiUserApplication.Models;
 using System.Web.Mvc;
+using Crayon.Api.Sdk.Domain;
 
 namespace MultiUserApplication.Controllers
 {
@@ -31,7 +31,7 @@ namespace MultiUserApplication.Controllers
             }
 
             string token = _client.Tokens.GetUserToken(_appSettings.CrayonClientId(), _appSettings.CrayonClientSecret(), Session["username"] as string, Session["password"] as string).GetData().AccessToken;
-            OrganizationCollection organizations = _client.Organizations.Get(token).GetData();
+            ApiCollection<Organization> organizations = _client.Organizations.Get(token).GetData();
             return View(organizations);
         }
     }

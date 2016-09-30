@@ -1,7 +1,7 @@
 ﻿using Crayon.Api.Sdk;
-using Crayon.Api.Sdk.Domain.Tokens;
 using SingleUserApplication.Models;
 using System;
+using Crayon.Api.Sdk.Domain;
 
 namespace SingleUserApplication.Handlers
 {

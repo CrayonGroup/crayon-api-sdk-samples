@@ -1,23 +1,11 @@
 ﻿using Crayon.Api.Sdk;
-using Crayon.Api.Sdk.Domain.Addresses;
-using Crayon.Api.Sdk.Domain.Clients;
-using Crayon.Api.Sdk.Domain.CloudProvisioning.CustomerTenants;
-using Crayon.Api.Sdk.Domain.CloudProvisioning.Subscriptions;
-using Crayon.Api.Sdk.Domain.Common;
-using Crayon.Api.Sdk.Domain.InvoiceProfiles;
-using Crayon.Api.Sdk.Domain.Products;
-using Crayon.Api.Sdk.Domain.MasterData.Publishers;
-using Crayon.Api.Sdk.Domain.MasterData.Regions;
-using Crayon.Api.Sdk.Domain.Organizations;
-using Crayon.Api.Sdk.Domain.Secrets;
-using Crayon.Api.Sdk.Domain.Tokens;
-using Crayon.Api.Sdk.Domain.Users;
-using Crayon.Api.Sdk.Extensions;
 using Crayon.Api.Sdk.Filtering;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Crayon.Api.Sdk.Exceptions;
+using Crayon.Api.Sdk.Domain;
+using Crayon.Api.Sdk.Domain.Csp;
+using Crayon.Api.Sdk.Domain.MasterData;
 
 namespace ConsoleApplication
 {
@@ -107,7 +95,7 @@ namespace ConsoleApplication
             Console.WriteLine("Products: ");
             var products = ApiClient.AgreementProducts.Get(GetToken(), new AgreementProductFilter { OrganizationId = organization.Id }).GetData();
             products.Items.ForEach(x => Console.WriteLine(x.Name));
-            var cspProductsNoAddons = ApiClient.GetMicrosoftCspSeatProducts(GetToken(), new AgreementProductFilter { OrganizationId = organization.Id }, false).GetData();
+            var cspProductsNoAddons = ApiClient.AgreementProducts.GetCspSeatProducts(GetToken(), new AgreementProductFilter { OrganizationId = organization.Id }, false).GetData();
             cspProductsNoAddons.Items.ForEach(x => Console.WriteLine(x.Name));
 
             //Billing statements
@@ -118,6 +106,9 @@ namespace ConsoleApplication
             {
                 var result = ApiClient.BillingStatements.GetAsFile(GetToken(), billingStatements.First().Id);
                 Console.WriteLine("Billing statement file: " + result.StatusCode);
+
+                var records = ApiClient.BillingStatements.GetBillingRecords(GetToken(), billingStatements.First().Id, new BillingRecordFilter { PageSize = 10 }).GetData();
+                Console.WriteLine("Billing statement records: " + records.Items.Any());
             }
 
             //Agreements
@@ -156,7 +147,7 @@ namespace ConsoleApplication
 
             //Usage records
             Console.WriteLine("Usage records: ");
-            var usage = ApiClient.UsageRecords.GetAsGrouped(GetToken(), new UsageRecordGroupedFilter { OrganizationId = organization.Id }).GetData();
+            var usage = ApiClient.UsageRecords.GetAsGrouped(GetToken(), new UsageRecordGroupedFilter { OrganizationId = organization.Id, From = DateTimeOffset.UtcNow.AddMonths(-1), To = DateTimeOffset.UtcNow }).GetData();
             usage.Items.ForEach(x => Console.WriteLine(x.MeterName));
 
             try
@@ -219,7 +210,7 @@ namespace ConsoleApplication
                         PartNumber = cspProductsNoAddons.Items.First().ProductVariant.Product.PartNumber
                     }
                 }).GetData();
-
+                
                 newSubscription.Name = "My console csp subscription";
                 newSubscription.Status = SubscriptionStatus.CustomerCancellation;
                 newSubscription = ApiClient.Subscriptions.Update(GetToken(), newSubscription).GetData();
@@ -242,7 +233,8 @@ namespace ConsoleApplication
                 return _myToken.AccessToken;
             }
 
-            _myToken = ApiClient.Tokens.GetUserToken(ClientId, ClientSecret, Username, Password).GetData();
+            var result  = ApiClient.Tokens.GetUserToken(ClientId, ClientSecret, Username, Password);
+            _myToken = result.GetData();
             var token = _myToken.AccessToken;
 
             if (string.IsNullOrEmpty(token))
